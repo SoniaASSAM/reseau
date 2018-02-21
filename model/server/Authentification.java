@@ -58,6 +58,7 @@ public class Authentification implements Runnable {
 				}
 			}
 			Server.clients.put(login,socket);
+			System.out.println(Server.clients.size());
 			t2 = new Thread(new ChatServer(socket,login));
 			t2.start();
 

@@ -28,8 +28,8 @@ public class ReceptionServer implements Runnable {
 				message = in.readLine();
 				String cmd = message.split(" ")[0];
 				ArrayList<String> dest = new ArrayList<>();
-				/**
-				if (cmd.equals("NICK")) {
+				System.out.println(Server.clients.size());
+				/**if (cmd.equals("NICK")) {
 					String d = message.split("@")[1].split(" ")[0];
 					dest.add(d);
 				}
@@ -37,6 +37,7 @@ public class ReceptionServer implements Runnable {
 				if (message.contains("BROADCAST")) //broadcast
 				if (message.contains("MULTICAST"))//multicast
 				*/
+				
 				
 				for(Socket user : Server.clients.values()) {
 					out = new PrintWriter(new OutputStreamWriter(user.getOutputStream(), "UTF8"), true);
