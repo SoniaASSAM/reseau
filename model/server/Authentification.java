@@ -35,7 +35,7 @@ public class Authentification implements Runnable {
 					out.flush();
 					pass = in.readLine();
 
-					if(isValid(login, pass)){
+					if(!isConnected(login) && isValid(login, pass)){
 
 						out.println("connecte");
 						System.out.println(login +" vient de se connecter ");
@@ -57,8 +57,7 @@ public class Authentification implements Runnable {
 					socket.close();
 				}
 			}
-			Server.clients.put(login,socket);
-			System.out.println(Server.clients.size());
+			Server.addConnection(login,socket);
 			t2 = new Thread(new ChatServer(socket,login));
 			t2.start();
 
@@ -67,11 +66,14 @@ public class Authentification implements Runnable {
 			System.err.println(login+" ne répond pas !");
 		}
 	}
+	
+	private static boolean isConnected(String login) {
+		Objects.requireNonNull(login);
+		return Server.getConnectedUsers().contains(login);
+	}
 
 	private static boolean isValid(String login, String pass) 
 	{
-		if (!Server.users.containsKey(login)) return false;
-		if (!Server.users.get(login).equals(pass)) return false;
-		return true;
+		return Server.isValidUser(login, pass);
 	}
 }

@@ -4,8 +4,9 @@ import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
 import java.net.Socket;
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Objects;
+import java.util.Set;
 
 
 public class ReceptionServer implements Runnable {
@@ -20,35 +21,60 @@ public class ReceptionServer implements Runnable {
 	}
 
 	public void run() {
-		
+
 		PrintWriter out = null;
+		boolean stop = false;
 
 		while(true){
 			try {
 				message = in.readLine();
-				String cmd = message.split(" ")[0];
-				ArrayList<String> dest = new ArrayList<>();
-				System.out.println(Server.clients.size());
-				/**if (cmd.equals("NICK")) {
-					String d = message.split("@")[1].split(" ")[0];
-					dest.add(d);
+				if (message.equals("QUIT")) // le déconnecter
+				{
+					Server.getClient(login).close();
+					System.out.println(login+" a quitté la conversation");
 				}
-				if (message.contains("QUIT")) // quit
-				if (message.contains("BROADCAST")) //broadcast
-				if (message.contains("MULTICAST"))//multicast
-				*/
-				
-				
-				for(Socket user : Server.clients.values()) {
-					out = new PrintWriter(new OutputStreamWriter(user.getOutputStream(), "UTF8"), true);
-					out.println(login+":"+message);
-					out.flush();
+				else {
+					String [] received = message.split("__");
+					String cmd = received[0];
+					message = received[1];
+					Set<String> dest = new HashSet<>();
+					if (cmd.equals("NICK")) {
+						String[] msgs = message.split(" ");
+						for (String d : msgs) {
+							if (d.startsWith("@")) {
+								dest.add(d.substring(1));
+								break;
+							}
+						}
+					}
+					else if (cmd.equals("BROADCAST")) 
+					{ 
+						dest = Server.getConnectedUsers();//broadcast
+					}
+					else if (cmd.contains("MULTICAST")) {
+						//multicast 
+						String [] msgs = message.split(" ");
+						for (String d : msgs) {
+							if (d.startsWith("@")) dest.add(d.substring(1));
+						}
+					}
+					Socket client = null;
+					if (!stop) {
+						for(String user : dest) {
+							client = Server.getClient(user);
+							if (client != null) {
+								out = new PrintWriter(new OutputStreamWriter(client.getOutputStream(), "UTF8"), true);
+								out.println(login+":"+message);
+								out.flush();
+							}
+							//sinon Ajouter le msg à la file d'attente
+						}
+						System.out.println(login+" : "+message);
+					}
 				}
-				System.out.println(login+" : "+message);
 			} catch (IOException e) {
 				e.printStackTrace();
 			}
 		}
 	}
-
 }

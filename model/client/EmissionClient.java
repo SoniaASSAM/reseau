@@ -29,22 +29,24 @@ public class EmissionClient implements Runnable {
 			System.out.println("Votre message :");
 			message = sc.nextLine();
 			ArrayList<String> dest = new ArrayList<>();
-			System.out.println(Server.users.size());
-			for (String user : Server.clients.keySet())
-			{
-				System.out.println("user "+user);
-				for (String msg : Arrays.asList(message.split(" "))) {
-					System.out.println(msg);
-					if (msg.contains("@"+user)) dest.add(user);
-				}
+			if (message.equals("quit") || message.equals("QUIT")) {
+				out.println("QUIT");
+				out.flush();
 			}
-			System.out.println(dest);
-			String cmd = "";
-			if (dest.size() == 1) cmd = "NICK";
-			else if (dest.size() > 1) cmd = "MULTICAST";
-			else cmd = "BROADCAST";
-			out.println(cmd+" "+message);
-			out.flush();
+			else {
+				for (String user : Server.getUsers())
+				{
+					for (String msg : Arrays.asList(message.split(" "))) {
+						if (msg.contains("@"+user)) dest.add(user);
+					}
+				}
+				String cmd = "";
+				if (dest.size() == 1) cmd = "NICK";
+				else if (dest.size() > 1) cmd = "MULTICAST";
+				else cmd = "BROADCAST";
+				out.println(cmd+"__"+message);
+				out.flush();
+			}
 		}
 	}
 }
