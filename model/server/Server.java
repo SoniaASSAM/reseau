@@ -2,6 +2,7 @@ package model.server;
 
 import java.io.*;
 import java.net.*;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
@@ -12,6 +13,7 @@ public class Server {
 	public static Thread t;
 	private final static Map<String,String> users = initUsersMap();
 	private final static Map <String,Socket> connections = new HashMap<>();
+	private final static ArrayList<Group> groups = initGroupsList();;
 
 
 	public static void main(String[] args) {
@@ -46,6 +48,33 @@ public class Server {
 		}
 		return users;
 	}
+
+	private static synchronized ArrayList<Group> initGroupsList(){
+		ArrayList<Group> groupsList = new ArrayList<>();
+		String fileName = "groups";
+		
+		try (BufferedReader br = new BufferedReader(new FileReader(fileName))) {
+
+			String line;
+			String [] groupDescription;
+			while ((line = br.readLine()) != null) {
+				groupDescription = line.split(" ");
+				String topic = groupDescription[0];
+				String operator = groupDescription[1];
+				String mode = groupDescription[2];
+				ArrayList<String> members = new ArrayList<>();
+				for (int i=3; i<groupDescription.length; i++) {
+					members.add(groupDescription[i]);
+				}
+				Group group = new Group (operator, mode, topic, members);
+				groupsList.add(group);
+			}
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
+		
+		return groupsList;
+	}
 	
 	public synchronized static void addConnection(String login, Socket client) {
 		Objects.requireNonNull(login);
@@ -75,5 +104,22 @@ public class Server {
 	
 	public synchronized static Set<Socket> getClients () {
 		return (Set<Socket>) connections.values();
+	}
+	
+	public static boolean isClient(String usr) {
+		if (users.keySet().contains(usr)) return true; 
+		return false; 
+	}
+	
+	public static boolean isGroup(String grp) {
+		if (groups.contains(grp)) return true;
+		return false; 
+	}
+	
+	public static ArrayList<String> getGroupMembers(String grp){
+		for (Group group : groups) {
+			if (group.equals(grp)) return group.getMembers();
+		}
+		return null;
 	}
 }

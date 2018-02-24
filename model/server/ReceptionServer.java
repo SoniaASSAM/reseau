@@ -37,39 +37,68 @@ public class ReceptionServer implements Runnable {
 					String [] received = message.split("__");
 					String cmd = received[0];
 					message = received[1];
+					String [] msgs = message.split(" ");
+					String usr;
 					Set<String> dest = new HashSet<>();
-					if (cmd.equals("NICK")) {
-						String[] msgs = message.split(" ");
-						for (String d : msgs) {
-							if (d.startsWith("@")) {
-								dest.add(d.substring(1));
-								break;
-							}
-						}
-					}
-					else if (cmd.equals("BROADCAST")) 
-					{ 
-						dest = Server.getConnectedUsers();//broadcast
-					}
-					else if (cmd.contains("MULTICAST")) {
-						//multicast 
-						String [] msgs = message.split(" ");
-						for (String d : msgs) {
-							if (d.startsWith("@")) dest.add(d.substring(1));
-						}
-					}
 					Socket client = null;
-					if (!stop) {
-						for(String user : dest) {
-							client = Server.getClient(user);
-							if (client != null) {
-								out = new PrintWriter(new OutputStreamWriter(client.getOutputStream(), "UTF8"), true);
-								out.println(login+":"+message);
-								out.flush();
+					switch (cmd) {
+						case "UNICAST" :
+							for (String d : msgs) {
+								if (d.startsWith("@")) {
+									usr = d.substring(1);
+									if (Server.isClient(usr)) dest.add(usr);
+									else if (Server.isGroup(usr)) dest.addAll(Server.getGroupMembers(usr));									break;
+								}
 							}
-							//sinon Ajouter le msg à la file d'attente
-						}
-						System.out.println(login+" : "+message);
+							if (!stop) {
+								for(String user : dest) {
+									client = Server.getClient(user);
+									if (client != null) {
+										out = new PrintWriter(new OutputStreamWriter(client.getOutputStream(), "UTF8"), true);
+										out.println(login+":"+message);
+										out.flush();
+									}
+									//sinon Ajouter le msg à la file d'attente
+								}
+								System.out.println(login+" : "+message);
+							}
+							break;
+						case "BROADCAST":
+							dest = Server.getConnectedUsers();//broadcast
+							if (!stop) {
+								for(String user : dest) {
+									client = Server.getClient(user);
+									if (client != null) {
+										out = new PrintWriter(new OutputStreamWriter(client.getOutputStream(), "UTF8"), true);
+										out.println(login+":"+message);
+										out.flush();
+									}
+									//sinon Ajouter le msg à la file d'attente
+								}
+								System.out.println(login+" : "+message);
+							}
+							break;
+						case "MULTICAST" :
+							for (String d : msgs) {
+								if (d.startsWith("@")) {
+									usr = d.substring(1);
+									if (Server.isClient(usr)) dest.add(usr);
+									else if (Server.isGroup(usr)) dest.addAll(Server.getGroupMembers(usr));
+								}
+							}
+							if (!stop) {
+								for(String user : dest) {
+									client = Server.getClient(user);
+									if (client != null) {
+										out = new PrintWriter(new OutputStreamWriter(client.getOutputStream(), "UTF8"), true);
+										out.println(login+":"+message);
+										out.flush();
+									}
+									//sinon Ajouter le msg à la file d'attente
+								}
+								System.out.println(login+" : "+message);
+							}
+							break;		
 					}
 				}
 			} catch (IOException e) {
